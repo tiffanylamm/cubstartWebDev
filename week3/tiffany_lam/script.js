@@ -23,6 +23,5 @@ function changeImage() {
     } else {
         image_link = full_cookie
     }
-    // document.getElementById("cookie_image").src="/week3/tiffany_lam/cookie.jpeg"
 }
 
