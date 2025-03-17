@@ -28,6 +28,10 @@
     var messages = document.getElementById('messages');
     var form = document.getElementById('form');
     var input = document.getElementById('input');
+
+    //need username when connecting 
+    let username = prompt('Enter your username:');
+    socket.emit('set username', username);
     
     // when user presses send button, emit message to all users
     form.addEventListener('submit', function(e) {

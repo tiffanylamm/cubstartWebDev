@@ -15,12 +15,30 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   console.log('a user connected');
 
+  socket.on('set username', (username) => {
+    socket.username = username;
+    io.emit('chat message', `Welcome ${socket.username}!`)
+  })
+
+  // //broadcasts to evveryone but connecting user
+  // socket.broadcast.emit('chat message', 'A user has connected');
+
   socket.on('disconnect', () => {
-    console.log('user disconnected');
+    if (socket.username) {
+      io.emit('chat message', `${socket.username} has disconnected`);
+    } else {
+      console.log('user disconnected');
+      //broadcasts to everyone
+      io.emit('chat message', 'A user has disconnected')
+    }
   });
 
   socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
+    if (socket.username) {
+      io.emit('chat message', `${socket.username}: ${msg}`)
+    } else {
+      io.emit('chat message', msg)
+    }
   });
 });
 
