@@ -28,10 +28,6 @@
     var messages = document.getElementById('messages');
     var form = document.getElementById('form');
     var input = document.getElementById('input');
-
-    //need username when connecting 
-    let username = prompt('Enter your username:');
-    socket.emit('set username', username);
     
     // when user presses send button, emit message to all users
     form.addEventListener('submit', function(e) {
@@ -41,12 +37,30 @@
         input.value = '';
       }
     });
+
+    // msg when new user joins
+    socket.on('new user joined', function() {
+      var item = document.createElement('li');
+      item.textContent = "A User has connected";
+      messages.appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    });
   
     // when receiving messages
     socket.on('chat message', function(msg) {
       var item = document.createElement('li');
       item.textContent = msg;
       messages.appendChild(item);
+      window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    // when user first loads up page, load saved msgs from db
+    socket.on('display msgs', function(msgs) {
+      msgs.forEach(element => {
+        var item = document.createElement('li');
+        item.textContent = element;
+        messages.appendChild(item);
+      });
       window.scrollTo(0, document.body.scrollHeight);
     });
   </script>

@@ -3,6 +3,16 @@ const app = express();
 const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
+const mongoose = require("mongoose");
+
+
+const Schema = mongoose.Schema;
+
+const messageSchema = new Schema({
+  content: {type: String}
+});
+
+const messageModel = mongoose.model("Message", messageSchema);
 
 // initialize a new instance of socket.io by passing the server (the HTTP server) object
 const io = new Server(server);
@@ -11,37 +21,36 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-// listen on the connection/disconnection event for incoming sockets and log it to the console
-io.on('connection', (socket) => {
-  console.log('a user connected');
+app.get('/messages', async function(req, res){
+  res.json(await messageModel.find());
+});
 
-  socket.on('set username', (username) => {
-    socket.username = username;
-    io.emit('chat message', `Welcome ${socket.username}!`)
-  })
+// listen on the connection/disconnection event for incoming sockets
+io.on ('connection', async (socket) => {
+  io.emit('new user joined');
 
-  // //broadcasts to evveryone but connecting user
-  // socket.broadcast.emit('chat message', 'A user has connected');
+  // display saved msgs from db
+  const msgs = await messageModel.find(); 
+  const contents = msgs.map(msg => msg.content); 
+  socket.emit('display msgs', contents);
 
   socket.on('disconnect', () => {
-    if (socket.username) {
-      io.emit('chat message', `${socket.username} has disconnected`);
-    } else {
-      console.log('user disconnected');
-      //broadcasts to everyone
-      io.emit('chat message', 'A user has disconnected')
-    }
+    console.log('user disconnected');
   });
 
   socket.on('chat message', (msg) => {
-    if (socket.username) {
-      io.emit('chat message', `${socket.username}: ${msg}`)
-    } else {
-      io.emit('chat message', msg)
-    }
+    // Save to MongoDB
+    const message = new messageModel();
+    message.content = msg;
+    message.save().then(m => {
+      io.emit('chat message', msg);
+    })
   });
 });
 
-server.listen(3000, () => {
+server.listen(3000, async () => {
+  await mongoose.connect("mongodb+srv://tiffanylam:9HcXK8bi3yYw04cM@cluster0.njgvl.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0").catch(e => {
+    console.log(e)
+  });
   console.log('listening on *:3000');
 });
